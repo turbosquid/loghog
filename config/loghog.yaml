@@ -1,8 +1,9 @@
-exclude_hosts: ["cthulhu-dev"]
+# Made up config for logstash
+exclude_hosts: ["ignore-me"]
 defaults:
     command: logbin/log.sh
     envars:
-        LOGSTASH_PUBLIC_HOST: cthulhu-dev.hero3d.net
+        LOGSTASH_PUBLIC_HOST: myhost.example.com
               
 hosts:
     - name: "postgres*"
