@@ -1,0 +1,16 @@
+exclude_hosts: ["cthulhu-dev"]
+defaults:
+    command: logbin/log.sh
+    envars:
+        LOGSTASH_PUBLIC_HOST: cthulhu-dev.hero3d.net
+              
+hosts:
+    - name: "postgres*"
+      envars:
+        LOGSTASH_TYPE: postgres
+        LOGSTASH_TAGS: "[postgres]"
+
+    - name: "*"
+      envars:
+        LOGSTASH_TYPE: test
+
