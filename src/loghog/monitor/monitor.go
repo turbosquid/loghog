@@ -96,6 +96,13 @@ func (m *Monitor) addListener(id string) (err error) {
 			env[parts[0]] = parts[1]
 		}
 	}
+	// Add os envars into map. We will override any values there already with os values
+	for _, v := range os.Environ() {
+		parts := strings.SplitN(v, "=", 2)
+		if len(parts) == 2 {
+			env[parts[0]] = parts[1]
+		}
+	}
 	// Override hostname if desired
 	if env["LOGHOG_HOSTNAME"] != "" {
 		hostname = env["LOGHOG_HOSTNAME"]
