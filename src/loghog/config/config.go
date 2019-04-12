@@ -5,12 +5,15 @@ import (
 	"io/ioutil"
 	"log"
 	"path/filepath"
+	"regexp"
 )
 
 type HostConfig struct {
-	Name    string            `yaml:"name"`
-	Command string            `yaml:"command"`
-	Envars  map[string]string `yaml:"envars"`
+	Name              string            `yaml:"name"`
+	Command           string            `yaml:"command"`
+	Envars            map[string]string `yaml:"envars"`
+	FilterLines       []string          `yaml:"filter_lines"`
+	FilterLinesRegexp []*regexp.Regexp
 }
 
 type Config struct {
@@ -28,6 +31,11 @@ func New(fn string) (c *Config, err error) {
 	err = yaml.Unmarshal(dat, c)
 	if err != nil {
 		return
+	}
+	for i, h := range c.Hosts {
+		for _, r := range h.FilterLines {
+			c.Hosts[i].FilterLinesRegexp = append(c.Hosts[i].FilterLinesRegexp, regexp.MustCompile(r))
+		}
 	}
 	return
 }
@@ -62,6 +70,15 @@ func (c *Config) HostInfo(name string) (h *HostConfig) {
 				}
 			}
 			return
+		}
+	}
+	return
+}
+
+func (h *HostConfig) FilterLine(line string) (exclude bool) {
+	for _, r := range h.FilterLinesRegexp {
+		if r.MatchString(line) {
+			return true
 		}
 	}
 	return

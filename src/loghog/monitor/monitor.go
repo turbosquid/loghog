@@ -129,7 +129,7 @@ func (m *Monitor) addListener(id string) (err error) {
 		}
 	}
 	log.Printf("Adding log listener for %s (%s)", hostname, id)
-	err = m.startListener(id, hostname, hc.Command, env)
+	err = m.startListener(id, hostname, hc.Command, env, hc)
 	return
 }
 
@@ -138,7 +138,7 @@ func (m *Monitor) removeListener(id string) (err error) {
 	return
 }
 
-func (m *Monitor) startListener(id, hostname, command string, env map[string]string) (err error) {
+func (m *Monitor) startListener(id, hostname, command string, env map[string]string, h *config.HostConfig) (err error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	httpc := http.Client{
 		Transport: &http.Transport{
@@ -183,6 +183,9 @@ func (m *Monitor) startListener(id, hostname, command string, env map[string]str
 		}()
 		for scanner.Scan() {
 			txt := fmt.Sprintf("%s\n", scanner.Text())
+			if h.FilterLine(txt) {
+				continue
+			}
 			stdin.Write([]byte(txt))
 			// log.Println(scanner.Text())
 		}
