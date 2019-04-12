@@ -14,6 +14,8 @@ import (
 	"os/exec"
 	"runtime/debug"
 	"strings"
+	"syscall"
+	"time"
 )
 
 type Monitor struct {
@@ -166,6 +168,7 @@ func (m *Monitor) startListener(id, hostname, command string, env map[string]str
 		log.Printf("Envars: %#v", envars)
 		scanner := bufio.NewScanner(resp.Body)
 		cmd := exec.Command(command)
+		cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 		cmd.Env = envars
 		stdin, err := cmd.StdinPipe()
 		cmd.Stdout = os.Stdout
@@ -188,6 +191,11 @@ func (m *Monitor) startListener(id, hostname, command string, env map[string]str
 			log.Printf("Unable to read response body: %s", err.Error())
 		}
 		log.Printf("EOF reading logs")
+		// Kill log process. Try TERM first, then kill it
+		log.Printf("Terminating logginng program for %s", hostname)
+		syscall.Kill(-cmd.Process.Pid, syscall.SIGTERM)
+		time.Sleep(5 * time.Second)
+		syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
 
 	}()
 	m.listeners[id] = cancel
