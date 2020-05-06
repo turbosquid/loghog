@@ -20,6 +20,7 @@ type Config struct {
 	ExcludeHosts []string     `yaml:"exclude_hosts"`
 	Defaults     HostConfig   `yaml:"defaults"`
 	Hosts        []HostConfig `yaml:"hosts"`
+	EnvarMatch   string       `yaml:"envar_match"` // If this envar is defined, then accept container for logging regardless of hostname
 }
 
 func New(fn string) (c *Config, err error) {

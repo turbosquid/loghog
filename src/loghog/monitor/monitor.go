@@ -111,7 +111,18 @@ func (m *Monitor) addListener(id string) (err error) {
 	} else {
 		env["LOGHOG_HOSTNAME"] = hostname
 	}
-	// Merge in any loghog envars configured
+
+	env["LOGHOG_CONTAINER_ID"] = id
+
+	// If this container has an environment varaible defined with the
+	// same name as EnvarMatch then we automatically set up logging using default settings
+	if m.cfg.EnvarMatch != "" && env[m.cfg.EnvarMatch] != "" {
+		log.Printf("Found envar match  for %s (%s) with %s=%s", hostname, id, m.cfg.EnvarMatch, env[m.cfg.EnvarMatch])
+		return m.startListener(id, hostname, m.cfg.Defaults.Command, env, &m.cfg.Defaults)
+	}
+
+	// Otherwise, decide if the container is eligible based on hostname, and get some
+	// Additional settings from the config based on the hostname
 
 	// Exclude ourselves and hosts named after containers (no explicit hostname)
 	if strings.Index(id, hostname) == 0 || hostname == m.hostname {
@@ -148,7 +159,7 @@ func (m *Monitor) startListener(id, hostname, command string, env map[string]str
 		},
 	}
 	go func() {
-		req, err := http.NewRequest("GET", fmt.Sprintf("http://unix/containers/%s/logs?stdout=1&follow=1&tail=10", id), nil)
+		req, err := http.NewRequest("GET", fmt.Sprintf("http://unix/containers/%s/logs?stdout=1&stderr=1&follow=1&tail=10", id), nil)
 		if err != nil {
 			log.Printf("Unable to create request: %s", err.Error())
 			return
