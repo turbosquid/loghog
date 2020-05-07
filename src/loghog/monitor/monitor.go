@@ -114,11 +114,13 @@ func (m *Monitor) addListener(id string) (err error) {
 
 	env["LOGHOG_CONTAINER_ID"] = id
 
+	tty := container_json.Config.Tty
+
 	// If this container has an environment varaible defined with the
 	// same name as EnvarMatch then we automatically set up logging using default settings
 	if m.cfg.EnvarMatch != "" && env[m.cfg.EnvarMatch] != "" {
 		log.Printf("Found envar match  for %s (%s) with %s=%s", hostname, id, m.cfg.EnvarMatch, env[m.cfg.EnvarMatch])
-		return m.startListener(id, hostname, m.cfg.Defaults.Command, env, &m.cfg.Defaults)
+		return m.startListener(id, hostname, m.cfg.Defaults.Command, env, &m.cfg.Defaults, tty)
 	}
 
 	// Otherwise, decide if the container is eligible based on hostname, and get some
@@ -140,7 +142,7 @@ func (m *Monitor) addListener(id string) (err error) {
 		}
 	}
 	log.Printf("Adding log listener for %s (%s)", hostname, id)
-	err = m.startListener(id, hostname, hc.Command, env, hc)
+	err = m.startListener(id, hostname, hc.Command, env, hc, tty)
 	return
 }
 
@@ -149,7 +151,7 @@ func (m *Monitor) removeListener(id string) (err error) {
 	return
 }
 
-func (m *Monitor) startListener(id, hostname, command string, env map[string]string, h *config.HostConfig) (err error) {
+func (m *Monitor) startListener(id, hostname, command string, env map[string]string, h *config.HostConfig, tty bool) (err error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	httpc := http.Client{
 		Transport: &http.Transport{
@@ -193,7 +195,11 @@ func (m *Monitor) startListener(id, hostname, command string, env map[string]str
 			log.Printf("Logging program finished for %s", hostname)
 		}()
 		for scanner.Scan() {
-			txt := fmt.Sprintf("%s\n", scanner.Text())
+			buf := scanner.Text()
+			if !tty && len(buf) >= 8 {
+				buf = buf[7 : len(buf)-1]
+			}
+			txt := fmt.Sprintf("%s\n", buf)
 			if h.FilterLine(txt) {
 				continue
 			}
