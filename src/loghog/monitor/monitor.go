@@ -197,7 +197,7 @@ func (m *Monitor) startListener(id, hostname, command string, env map[string]str
 		for scanner.Scan() {
 			buf := scanner.Text()
 			if !tty && len(buf) >= 8 {
-				buf = buf[7 : len(buf)-1]
+				buf = buf[8:]
 			}
 			txt := fmt.Sprintf("%s\n", buf)
 			if h.FilterLine(txt) {
