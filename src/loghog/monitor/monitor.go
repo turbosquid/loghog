@@ -183,7 +183,7 @@ func (m *Monitor) startListener(id, hostname, command string, env map[string]str
 		log.Printf("Envars: %#v", envars)
 		scanner := bufio.NewScanner(resp.Body)
 		buf := make([]byte, 0, 1024*1024)
-		scanner.Buffer(buf, 1024*1024*50) // 50 mb max size
+		scanner.Buffer(buf, 1024*1024*200) // 200 mb max size
 		cmd := exec.Command(command)
 		cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 		cmd.Env = envars
@@ -212,7 +212,7 @@ func (m *Monitor) startListener(id, hostname, command string, env map[string]str
 		}
 		stdin.Close()
 		if err := scanner.Err(); err != nil {
-			log.Printf("Unable to read response body: %s", err.Error())
+			log.Printf("Unable to read response body: %s for %s", err.Error(), hostname)
 		}
 		log.Printf("EOF reading logs")
 		// Kill log process. Try TERM first, then kill it
