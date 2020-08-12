@@ -112,6 +112,8 @@ func (m *Monitor) addListener(id string) (err error) {
 		env["LOGHOG_HOSTNAME"] = hostname
 	}
 
+	env["LOGHOG_HOSTNAME"] = fmt.Sprintf("%s-%s", env["LOGHOG_HOSTNAME"], id[0:8]) // Qualify with container id
+
 	env["LOGHOG_CONTAINER_ID"] = id
 
 	tty := container_json.Config.Tty
