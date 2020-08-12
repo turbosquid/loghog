@@ -183,7 +183,7 @@ func (m *Monitor) startListener(id, hostname, command string, env map[string]str
 		log.Printf("Envars: %#v", envars)
 		scanner := bufio.NewScanner(resp.Body)
 		buf := make([]byte, 0, 1024*1024)
-		scanner.Buffer(buf, 1024*1024*10) // 10 mb max size
+		scanner.Buffer(buf, 1024*1024*50) // 50 mb max size
 		cmd := exec.Command(command)
 		cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 		cmd.Env = envars
