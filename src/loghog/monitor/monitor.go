@@ -186,7 +186,7 @@ func (m *Monitor) startListener(id, hostname, command string, env map[string]str
 		},
 	}
 	go func() {
-		req, err := http.NewRequest("GET", fmt.Sprintf("http://unix/containers/%s/logs?stdout=1&stderr=1&follow=1&tail=10", id), nil)
+		req, err := http.NewRequest("GET", fmt.Sprintf("http://unix/containers/%s/logs?stdout=1&stderr=1&follow=1&tail=0", id), nil)
 		if err != nil {
 			log.Printf("Unable to create request: %s", err.Error())
 			return
@@ -209,7 +209,7 @@ func (m *Monitor) startListener(id, hostname, command string, env map[string]str
 		log.Printf("Envars: %#v", envars)
 		scanner := bufio.NewScanner(resp.Body)
 		buf := make([]byte, 0, 1024*1024)
-		scanner.Buffer(buf, 1024*1024*200) // 200 mb max size
+		scanner.Buffer(buf, 1024*1024*20) // 20 mb max size
 		cmd := exec.Command(command)
 		cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 		cmd.Env = envars
