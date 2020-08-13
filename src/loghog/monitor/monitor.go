@@ -82,6 +82,9 @@ events:
 				log.Printf("Logging stopped for monitored container: %s", id[:10])
 				if m.isRunning(id) {
 					log.Printf("Container is still running -- will re-add monitor")
+					if err = m.addListener(id); err != nil {
+						log.Printf("Unable to read container: %s (%s)", id[:10], err.Error())
+					}
 				}
 			}
 		}
