@@ -19,10 +19,11 @@ import (
 )
 
 type Monitor struct {
-	cli       *client.Client
-	hostname  string
-	listeners map[string]context.CancelFunc
-	cfg       *config.Config
+	cli         *client.Client
+	hostname    string
+	listeners   map[string]context.CancelFunc
+	cfg         *config.Config
+	chContainer chan string
 }
 
 func New(c *config.Config) (m *Monitor, err error) {
@@ -36,6 +37,7 @@ func New(c *config.Config) (m *Monitor, err error) {
 		return
 	}
 	m.listeners = make(map[string]context.CancelFunc)
+	m.chContainer = make(chan string)
 	return
 }
 
@@ -76,10 +78,28 @@ events:
 			case err := <-ev_err:
 				log.Printf("Got error event: %s", err.Error())
 				break events
+			case id := <-m.chContainer:
+				log.Printf("Logging stopped for monitored container: %s", id[:10])
+				if m.isRunning(id) {
+					log.Printf("Container is still running -- will re-add monitor")
+				}
 			}
 		}
 	}
 	return
+}
+
+func (m *Monitor) isRunning(id string) bool {
+	container_json, err := m.cli.ContainerInspect(context.Background(), id)
+	if err != nil {
+		log.Printf("Unable o recheck container. Probably no longer exists:  %s - %s", id[:10], err.Error())
+		return false
+	}
+	if container_json.State.Status != "running" {
+		log.Printf("Container %s is no longer running", id[:10])
+		return false
+	}
+	return true
 }
 
 func (m *Monitor) addListener(id string) (err error) {
@@ -197,6 +217,7 @@ func (m *Monitor) startListener(id, hostname, command string, env map[string]str
 		go func() {
 			cmd.Wait()
 			log.Printf("Logging program finished for %s", hostname)
+			cancel()
 		}()
 		for scanner.Scan() {
 			buf := scanner.Text()

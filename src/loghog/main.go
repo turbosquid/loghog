@@ -7,7 +7,7 @@ import (
 	"loghog/monitor"
 )
 
-const VERSION = "1.0.0"
+const VERSION = "1.1.0"
 const CONFIG_FILE = "/etc/loghog.yml"
 
 func main() {
