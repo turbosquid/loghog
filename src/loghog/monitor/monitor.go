@@ -194,7 +194,10 @@ func (m *Monitor) startListener(id, hostname, command string, env map[string]str
 			log.Printf("Unable to make request: %s", err.Error())
 			return
 		}
-		defer resp.Body.Close()
+		defer func() {
+			resp.Body.Close()
+			m.chContainer <- id // Recheck container to see if logging ended prematurely
+		}()
 		// Turn env map back into a list of strings
 		var envars []string
 		for k, v := range env {
